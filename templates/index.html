@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISION Assistant Interface</title>
+    <!-- Load Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a futuristic, high-contrast look */
+        body {
+            font-family: 'Inter', monospace;
+        }
+        .vision-glow {
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.7); /* Deep Sky Blue Glow */
+            border-color: #00bfff;
+        }
+        .vision-text {
+            color: #00bfff;
+        }
+        #output-area {
+            min-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap; /* Preserve formatting from markdown response */
+        }
+        .loader {
+            border-top-color: #00bfff;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+    <!-- Header -->
+    <header class="text-center mb-8">
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight vision-text">
+            VISION Protocol Interface
+        </h1>
+        <p class="text-gray-400 mt-2 text-lg">Awaiting Query Input</p>
+    </header>
+
+    <!-- Main Card/Container -->
+    <div class="w-full max-w-4xl bg-gray-800 rounded-xl shadow-2xl p-6 sm:p-8 border border-gray-700">
+
+        <!-- Input Area -->
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+            <input
+                id="userQuery"
+                type="text"
+                placeholder="Enter your real-time query here..."
+                class="flex-grow p-4 bg-gray-700 text-gray-50 border-2 border-gray-600 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:border-cyan-500 transition duration-300"
+                onkeypress="if(event.key === 'Enter') document.getElementById('askButton').click()"
+            >
+            <button
+                id="askButton"
+                onclick="askVision()"
+                class="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg vision-glow transition duration-300 shadow-md shadow-cyan-900/50 flex items-center justify-center disabled:opacity-50"
+            >
+                <span id="buttonText">Execute Query</span>
+                <div id="loader" class="hidden loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-6 w-6 ml-3"></div>
+            </button>
+        </div>
+
+        <!-- Output Area -->
+        <div class="bg-gray-900 p-6 rounded-lg border border-gray-700 vision-glow/30">
+            <h2 class="text-xl font-semibold mb-3 text-cyan-400 border-b border-gray-700 pb-2">AI Response Log:</h2>
+            <pre id="output-area" class="text-sm text-gray-300"></pre>
+
+            <!-- Citations Area -->
+            <div id="citationsArea" class="mt-4 pt-4 border-t border-gray-700 hidden">
+                <h3 class="text-sm font-medium text-cyan-500 mb-2">Source Grounding:</h3>
+                <ul id="citationsList" class="text-xs text-gray-400 list-disc list-inside space-y-1"></ul>
+            </div>
+            
+            <!-- Error Message Area -->
+             <p id="error-message" class="text-red-500 font-medium mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = '/api/ask'; // Relative path to your Flask route
+        const outputArea = document.getElementById('output-area');
+        const citationsArea = document.getElementById('citationsArea');
+        const citationsList = document.getElementById('citationsList');
+        const askButton = document.getElementById('askButton');
+        const buttonText = document.getElementById('buttonText');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('error-message');
+
+        // Initial welcome message
+        outputArea.textContent = "[VISION] | System operational. Awaiting command input to /api/ask endpoint.";
+
+        async function askVision() {
+            const userQuery = document.getElementById('userQuery').value.trim();
+
+            if (!userQuery) {
+                errorMessage.textContent = "[VISION] | Error: Query input cannot be empty.";
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Clear previous output and set loading state
+            outputArea.textContent = "[VISION] | Processing query... establishing secure connection to Gemini search vector...";
+            citationsArea.classList.add('hidden');
+            citationsList.innerHTML = '';
+            errorMessage.classList.add('hidden');
+
+            // Disable button and show loader
+            askButton.disabled = true;
+            buttonText.textContent = "Processing...";
+            loader.classList.remove('hidden');
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: userQuery })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    const errorMsg = data.error || `HTTP Error: ${response.status} ${response.statusText}`;
+                    outputArea.textContent = `[VISION] | CRITICAL FAILURE: ${errorMsg}`;
+                    errorMessage.textContent = "Query failed. Please check server logs or API key configuration.";
+                    errorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                // 1. Display AI Response
+                outputArea.textContent = data.response;
+
+                // 2. Display Citations
+                if (data.citations && data.citations.length > 0) {
+                    citationsArea.classList.remove('hidden');
+                    data.citations.forEach((source, index) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `(${index + 1}) <a href="${source.uri}" target="_blank" class="hover:text-cyan-300 underline">${source.title}</a>`;
+                        citationsList.appendChild(li);
+                    });
+                }
+
+            } catch (e) {
+                console.error("Network or Fetch Error:", e);
+                outputArea.textContent = `[VISION] | CONNECTION INTERRUPTED. Check network connectivity. Details: ${e.message}`;
+                errorMessage.textContent = "A network error occurred. Check your internet connection or server status.";
+                errorMessage.classList.remove('hidden');
+            } finally {
+                // Restore button state
+                askButton.disabled = false;
+                buttonText.textContent = "Execute Query";
+                loader.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
