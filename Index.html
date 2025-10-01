@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISION AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --royal-blue: #1e3a8a;
+            --royal-gold: #d4af37;
+            --deep-navy: #0f172a;
+            --light-gold: #fef3c7;
+            --pure-white: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--deep-navy) 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: var(--pure-white);
+        }
+        
+        /* Royal Header */
+        .royal-header {
+            background: linear-gradient(135deg, var(--royal-blue) 0%, #1e40af 100%);
+            border-bottom: 3px solid var(--royal-gold);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .vision-logo {
+            background: linear-gradient(135deg, var(--royal-gold), #fbbf24);
+            border: 2px solid var(--royal-gold);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        /* Status Indicator */
+        .status-indicator {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        
+        /* Chat Messages */
+        .chat-container {
+            max-height: 65vh;
+            scroll-behavior: smooth;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, var(--royal-blue), #2563eb);
+            border: 1px solid var(--royal-gold);
+            border-radius: 18px 18px 4px 18px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .ai-message {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #334155;
+            border-radius: 18px 18px 18px 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Input Area */
+        .input-area {
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 2px solid var(--royal-gold);
+        }
+        
+        .input-field {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid #374151;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            border-color: var(--royal-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, var(--royal-gold), #f59e0b);
+            border: 2px solid var(--royal-gold);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .send-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Typing Indicator */
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--royal-gold);
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        /* Citations */
+        .citation-badge {
+            background: rgba(30, 58, 138, 0.3);
+            border: 1px solid var(--royal-blue);
+            transition: all 0.3s ease;
+        }
+        
+        .citation-badge:hover {
+            background: rgba(30, 58, 138, 0.5);
+        }
+        
+        /* Scrollbar */
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--royal-gold);
+            border-radius: 3px;
+        }
+        
+        /* Copyright */
+        .copyright {
+            color: var(--royal-gold);
+            font-weight: 500;
+        }
+        
+        /* Message Content */
+        .message-content {
+            line-height: 1.6;
+        }
+        
+        .message-content strong {
+            color: var(--royal-gold);
+            font-weight: 600;
+        }
+        
+        .message-content code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .message-content pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+            border: 1px solid #374151;
+        }
+        
+        /* Logo Styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid var(--royal-gold);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="royal-header py-4 px-6">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="logo-container">
+                <img src="https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=100&h=100&fit=crop&crop=center" 
+                     alt="VISION Logo" 
+                     class="logo-image">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">VISION AI</h1>
+                    <p class="text-sm text-blue-100">Advanced Intelligence System</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 text-sm text-blue-100">
+                    <div class="status-indicator w-3 h-3 rounded-full"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Chat Area -->
+    <main class="flex-1 max-w-4xl w-full mx-auto py-8 px-4">
+        <div class="chat-container overflow-y-auto mb-6">
+            <div id="chat-messages" class="space-y-6">
+                <!-- Welcome Message -->
+                <div class="flex items-start space-x-4">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div class="ai-message p-5 max-w-[80%]">
+                        <div class="message-content">
+                            <p><strong>VISION AI</strong> system initialized and ready. How may I assist you today?</p>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-3">System Ready</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer class="input-area py-6 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex space-x-4 mb-4">
+                <div class="flex-1">
+                    <input 
+                        type="text" 
+                        id="user-input" 
+                        placeholder="Enter your message..." 
+                        class="w-full input-field rounded-xl py-4 px-6 text-white placeholder-gray-400 focus:outline-none text-base"
+                    >
+                </div>
+                <button id="send-btn" class="send-btn w-16 h-16 rounded-xl flex items-center justify-center text-white text-xl">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="text-center">
+                <div class="copyright text-sm">
+                    © 2024 VISION AI Systems. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_KEY = "AIzaSyBwouSEYCymxZAmP9AqjPCj4ph41WbsJYM";
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
+        
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        
+        // System prompt
+        const SYSTEM_PROMPT = `You are VISION, an advanced AI assistant. Provide clear, concise, and helpful responses. Use markdown for formatting. Always cite sources when using web search.`;
+        
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start space-x-4 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                isUser 
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-800' 
+                    : 'bg-gradient-to-br from-gray-600 to-gray-800'
+            }`;
+            
+            const avatarIcon = document.createElement('i');
+            avatarIcon.className = isUser ? 'fas fa-user text-white' : 'fas fa-robot text-white';
+            avatar.appendChild(avatarIcon);
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = isUser ? 'user-message p-5 max-w-[80%]' : 'ai-message p-5 max-w-[80%]';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            if (typeof content === 'string') {
+                messageContent.innerHTML = formatMessage(content);
+            } else {
+                messageContent.appendChild(content);
+            }
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'text-xs text-gray-400 mt-3';
+            timestamp.textContent = 'Just now';
+            
+            messageBubble.appendChild(messageContent);
+            messageBubble.appendChild(timestamp);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageBubble);
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                chatMessages.parentElement.scrollTo({
+                    top: chatMessages.parentElement.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+            
+            return messageBubble;
+        }
+        
+        // Format message with markdown
+        function formatMessage(text) {
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+            text = text.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+            return text;
+        }
+        
+        // Show typing indicator
+        function showTypingIndicator() {
+            const indicatorDiv = document.createElement('div');
+            indicatorDiv.className = 'flex items-start space-x-4';
+            indicatorDiv.id = 'typing-indicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'w-10 h-10 rounded-lg bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center flex-shrink-0';
+            
+            const avatarIcon = document.createElement('i');
+            avatarIcon.className = 'fas fa-robot text-white';
+            avatar.appendChild(avatarIcon);
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = 'ai-message p-5';
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex space-x-1';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'typing-dot rounded-full';
+                typingDiv.appendChild(dot);
+            }
+            
+            messageBubble.appendChild(typingDiv);
+            indicatorDiv.appendChild(avatar);
+            indicatorDiv.appendChild(messageBubble);
+            
+            chatMessages.appendChild(indicatorDiv);
+            chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
+            
+            return indicatorDiv;
+        }
+        
+        // Remove typing indicator
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Call API
+        async function callAPI(userMessage) {
+            const payload = {
+                contents: [{
+                    parts: [{ text: userMessage }]
+                }],
+                systemInstruction: {
+                    parts: [{ text: SYSTEM_PROMPT }]
+                },
+                tools: [{ "google_search": {} }],
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const candidate = data.candidates?.[0];
+                
+                if (!candidate) {
+                    throw new Error('No response from AI');
+                }
+                
+                const text = candidate.content?.parts?.[0]?.text || 'Unable to generate response.';
+                let sources = [];
+                
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata?.groundingAttributions) {
+                    sources = groundingMetadata.groundingAttributions;
+                }
+                
+                return { text, sources };
+            } catch (error) {
+                console.error('API Error:', error);
+                return { 
+                    text: "System temporarily unavailable. Please try again.", 
+                    sources: [] 
+                };
+            }
+        }
+        
+        // Handle sending message
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Clear input
+            userInput.value = '';
+            
+            // Add user message
+            addMessage(message, true);
+            
+            // Show typing indicator
+            const typingIndicator = showTypingIndicator();
+            
+            // Disable send button
+            sendBtn.disabled = true;
+            
+            try {
+                // Get AI response
+                const { text, sources } = await callAPI(message);
+                
+                // Remove typing indicator
+                removeTypingIndicator();
+                
+                // Add AI response
+                const aiMessageBubble = addMessage(text, false);
+                
+                // Add sources if available
+                if (sources.length > 0) {
+                    const sourcesContainer = document.createElement('div');
+                    sourcesContainer.className = 'mt-4 pt-4 border-t border-gray-600';
+                    
+                    const sourcesTitle = document.createElement('div');
+                    sourcesTitle.className = 'text-sm text-gray-400 mb-3';
+                    sourcesTitle.textContent = 'Sources:';
+                    
+                    sourcesContainer.appendChild(sourcesTitle);
+                    
+                    const sourcesList = document.createElement('div');
+                    sourcesList.className = 'flex flex-wrap gap-2';
+                    
+                    sources.forEach((source, index) => {
+                        const webInfo = source.web;
+                        if (webInfo?.uri) {
+                            const sourceBadge = document.createElement('a');
+                            sourceBadge.href = webInfo.uri;
+                            sourceBadge.target = '_blank';
+                            sourceBadge.className = 'citation-badge px-3 py-1 rounded-lg text-xs text-blue-300 no-underline';
+                            sourceBadge.textContent = `Source ${index + 1}`;
+                            sourcesList.appendChild(sourceBadge);
+                        }
+                    });
+                    
+                    sourcesContainer.appendChild(sourcesList);
+                    aiMessageBubble.appendChild(sourcesContainer);
+                }
+                
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage("Error processing request. Please try again.", false);
+            } finally {
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+        
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Focus input on load
+        userInput.focus();
+    </script>
+</body>
+  </html>
